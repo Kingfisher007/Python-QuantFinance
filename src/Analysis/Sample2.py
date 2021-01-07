@@ -331,3 +331,54 @@ sony = web.DataReader("SNY", "yahoo", start, end)
 nintendo = web.DataReader("NTDOY", "yahoo", start, end)
 ibm = web.DataReader("IBM", "yahoo", start, end)
 hp = web.DataReader("HPQ", "yahoo", start, end)
+
+
+signals = ma_crossover_orders([("AAPL", ohlc_adj(apple)),
+                              ("MSFT",  ohlc_adj(microsoft)),
+                              ("GOOG",  ohlc_adj(google)),
+                              ("FB",    ohlc_adj(facebook)),
+                              ("TWTR",  ohlc_adj(twitter)),
+                              ("NFLX",  ohlc_adj(netflix)),
+                              ("AMZN",  ohlc_adj(amazon)),
+                              ("YHOO",  ohlc_adj(yahoo)),
+                              ("SNY",   ohlc_adj(yahoo)),
+                              ("NTDOY", ohlc_adj(nintendo)),
+                              ("IBM",   ohlc_adj(ibm)),
+                              ("HPQ",   ohlc_adj(hp))],
+                            fast = 20, slow = 50)
+signals
+
+
+
+
+bk = backtest(signals, 1000000)
+bk
+
+
+
+bk["Portfolio Value"].groupby(level = 0).apply(lambda x: x[-1]).plot()
+
+
+
+
+spyder = web.DataReader("SPY", "yahoo", start, end)
+spyder.iloc[[0,-1],:]
+
+
+
+
+batches = 1000000 // np.ceil(100 * spyder.ix[0,"Adj Close"]) # Maximum number of batches of stocks invested in
+trade_val = batches * batch * spyder.ix[0,"Adj Close"] # How much money is used to buy SPY
+final_val = batches * batch * spyder.ix[-1,"Adj Close"] + (1000000 - trade_val) # Final value of the portfolio
+final_val
+
+
+
+# We see that the buy-and-hold strategy beats the strategy we developed earlier. I would also like to see a plot.
+ax_bench = (spyder["Adj Close"] / spyder.ix[0, "Adj Close"]).plot(label = "SPY")
+ax_bench = (bk["Portfolio Value"].groupby(level = 0).apply(lambda x: x[-1]) / 1000000).plot(ax = ax_bench, label = "Portfolio")
+ax_bench.legend(ax_bench.get_lines(), [l.get_label() for l in ax_bench.get_lines()], loc = 'best')
+ax_bench
+
+
+
